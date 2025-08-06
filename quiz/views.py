@@ -1,3 +1,34 @@
+from django.core.serializers import serialize
+def api_quizzes(request):
+    quizzes = Quiz.objects.all().order_by('-created_at')
+    quiz_list = [
+        {
+            'title': quiz.title,
+            'description': quiz.description,
+            'game_code': quiz.game_code
+        }
+        for quiz in quizzes
+    ]
+    return JsonResponse({'quizzes': quiz_list})
+def choose_quiz(request):
+    return render(request, 'quiz/choose_quiz.html')
+from django.views.decorators.csrf import csrf_exempt
+@csrf_exempt
+def join_quiz(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        name = data.get('name', '').strip()
+        if not name:
+            return JsonResponse({'error': 'Name is required'}, status=400)
+
+        # For demo: always create a new session for each join (or you can customize logic)
+        session = GameSession.objects.create(
+            quiz=Quiz.objects.first(),  # You may want to select a quiz differently
+            status='WAITING'
+        )
+        player = Player.objects.create(session=session, name=name)
+        return JsonResponse({'success': True, 'player_id': player.id, 'session_id': session.id})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt

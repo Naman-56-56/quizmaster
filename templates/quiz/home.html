@@ -59,8 +59,24 @@ if (showJoinFormBtn && joinNameForm) {
         e.preventDefault();
         const userName = document.getElementById('userName').value.trim();
         if (userName.length > 0) {
-            // You can handle the next step here, e.g., redirect or show a message
-            alert('Welcome, ' + userName + '!');
+            fetch('/api/join-quiz/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ name: userName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Redirect to choose_quiz page with user name as query param
+                    window.location.href = '/choose-quiz/?name=' + encodeURIComponent(userName);
+                } else {
+                    alert(data.error || 'An error occurred.');
+                }
+            })
+            .catch(() => alert('An error occurred.'));
         }
     });
 }
