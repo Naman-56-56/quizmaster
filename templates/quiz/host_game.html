@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-white">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">{{ quiz.title }}</h1>
+                <p class="text-lg">Game Code: <span class="font-mono font-bold">{{ quiz.game_code }}</span></p>
+                <p class="text-sm opacity-80">Status: <span id="gameStatus">{{ session.get_status_display }}</span></p>
+            </div>
+            
+            {% if quiz.qr_code %}
+            <div class="mt-4 md:mt-0">
+                <img src="{{ quiz.qr_code.url }}" alt="QR Code" class="w-32 h-32 bg-white rounded-lg p-2">
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-white">
+        <h2 class="text-xl font-bold mb-4">Game Controls</h2>
+        <div class="flex flex-wrap gap-4">
+            <button id="startGame" onclick="startGame()" 
+                    class="bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-semibold">
+                Start Game
+            </button>
+            <button id="nextQuestion" onclick="nextQuestion()" 
+                    class="bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-semibold" disabled>
+                Next Question
+            </button>
+            <button id="endGame" onclick="endGame()" 
+                    class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-lg font-semibold" disabled>
+                End Game
+            </button>
+        </div>
+    </div>
+    
+    <!-- Current Question -->
+    <div id="currentQuestion" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-white hidden">
+        <h2 class="text-xl font-bold mb-4">Current Question</h2>
+        <div id="questionContent">
+            <!-- Question content will be loaded here -->
+        </div>
+        <div class="mt-4">
+            <div class="flex justify-between items-center mb-2">
+                <span>Time Remaining:</span>
+                <span id="timeRemaining" class="font-bold text-2xl">30s</span>
+            </div>
+            <div class="w-full bg-white/20 rounded-full h-3">
+                <div id="timeProgress" class="bg-yellow-400 h-3 rounded-full transition-all duration-1000" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Players and Leaderboard -->
+    <div class="grid md:grid-cols-2 gap-6">
+        <!-- Players -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+            <h2 class="text-xl font-bold mb-4">Players (<span id="playerCount">{{ players.count }}</span>)</h2>
+            <div id="playersList" class="space-y-2 max-h-64 overflow-y-auto">
+                {% for player in players %}
+                <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
+                    <span>{{ player.nickname }}</span>
+                    <span class="text-sm opacity-80">{{ player.joined_at|date:"H:i" }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Leaderboard -->
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+            <h2 class="text-xl font-bold mb-4">Live Leaderboard</h2>
+            <div id="leaderboard" class="space-y-2">
+                {% for player in players %}
+                <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
+                    <div class="flex items-center">
+                        <span class="w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                            {{ forloop.counter }}
+                        </span>
+                        <span>{{ player.nickname }}</span>
+                    </div>
+                    <span class="font-bold text-lg">{{ player.score }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const gameCode = '{{ quiz.game_code }}';
+const socket = new WebSocket(`ws://${window.location.host}/ws/game/${gameCode}/`);
+
+let currentTimer = null;
+
+socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    
+    switch(data.type) {
+        case 'game_started':
+            handleGameStarted(data.question);
+            break;
+        case 'new_question':
+            handleNewQuestion(data.question);
+            break;
+        case 'game_ended':
+            handleGameEnded(data.leaderboard);
+            break;
+        case 'player_update':
+            updatePlayerCount();
+            break;
+        case 'leaderboard_update':
+            updateLeaderboard(data.leaderboard);
+            break;
+    }
+};
+
+function startGame() {
+    socket.send(JSON.stringify({
+        'type': 'start_game'
+    }));
+    
+    document.getElementById('startGame').disabled = true;
+    document.getElementById('nextQuestion').disabled = false;
+    document.getElementById('endGame').disabled = false;
+    document.getElementById('gameStatus').textContent = 'Active';
+}
+
+function nextQuestion() {
+    socket.send(JSON.stringify({
+        'type': 'next_question'
+    }));
+}
+
+function endGame() {
+    if (confirm('Are you sure you want to end the game?')) {
+        socket.send(JSON.stringify({
+            'type': 'end_game'
+        }));
+    }
+}
+
+function handleGameStarted(questionData) {
+    document.getElementById('currentQuestion').classList.remove('hidden');
+    displayQuestion(questionData);
+    startTimer(questionData.time_limit);
+}
+
+function handleNewQuestion(questionData) {
+    displayQuestion(questionData);
+    startTimer(questionData.time_limit);
+}
+
+function handleGameEnded(leaderboard) {
+    document.getElementById('currentQuestion').classList.add('hidden');
+    document.getElementById('nextQuestion').disabled = true;
+    document.getElementById('endGame').disabled = true;
+    document.getElementById('gameStatus').textContent = 'Finished';
+    
+    if (currentTimer) {
+        clearInterval(currentTimer);
+    }
+    
+    updateLeaderboard(leaderboard);
+    showNotification('Game has ended!', 'success');
+}
+
+function displayQuestion(questionData) {
+    const questionContent = document.getElementById('questionContent');
+    
+    let optionsHtml = '';
+    questionData.options.forEach((option, index) => {
+        optionsHtml += `
+            <div class="bg-white/10 rounded-lg p-3 mb-2">
+                <span class="font-bold">${String.fromCharCode(65 + index)}.</span> ${option}
+            </div>
+        `;
+    });
+    
+    questionContent.innerHTML = `
+        <div class="mb-4">
+            <div class="text-sm opacity-80 mb-2">
+                Question ${questionData.question_number} of ${questionData.total_questions}
+            </div>
+            <h3 class="text-lg font-bold mb-4">${questionData.question}</h3>
+            <div class="space-y-2">
+                ${optionsHtml}
+            </div>
+        </div>
+    `;
+}
+
+function startTimer(duration) {
+    if (currentTimer) {
+        clearInterval(currentTimer);
+    }
+    
+    let timeLeft = duration;
+    const timeDisplay = document.getElementById('timeRemaining');
+    const progressBar = document.getElementById('timeProgress');
+    
+    currentTimer = setInterval(() => {
+        timeLeft--;
+        timeDisplay.textContent = `${timeLeft}s`;
+        
+        const percentage = (timeLeft / duration) * 100;
+        progressBar.style.width = `${percentage}%`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(currentTimer);
+            // Auto advance after 2 seconds
+            setTimeout(() => {
+                nextQuestion();
+            }, 2000);
+        }
+    }, 1000);
+}
+
+function updatePlayerCount() {
+    fetch(`/api/leaderboard/${gameCode}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('playerCount').textContent = data.leaderboard.length;
+        });
+}
+
+function updateLeaderboard(leaderboardData) {
+    const leaderboard = document.getElementById('leaderboard');
+    
+    leaderboard.innerHTML = leaderboardData.map((player, index) => `
+        <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
+            <div class="flex items-center">
+                <span class="w-8 h-8 ${
+                    index === 0 ? 'bg-yellow-500' : 
+                    index === 1 ? 'bg-gray-400' : 
+                    index === 2 ? 'bg-orange-500' : 'bg-blue-500'
+                } text-black rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                    ${player.rank}
+                </span>
+                <span>${player.nickname}</span>
+            </div>
+            <span class="font-bold text-lg">${player.score}</span>
+        </div>
+    `).join('');
+}
+
+// Update leaderboard every 3 seconds
+setInterval(() => {
+    fetch(`/api/leaderboard/${gameCode}/`)
+        .then(response => response.json())
+        .then(data => updateLeaderboard(data.leaderboard));
+}, 3000);
+</script>
+{% endblock %}

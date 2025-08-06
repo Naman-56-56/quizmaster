@@ -1,0 +1,7 @@
+Django==4.2.7
+channels==4.0.0
+channels-redis==4.1.0
+daphne==4.0.0
+qrcode==7.4.2
+Pillow==10.1.0
+redis==5.0.1

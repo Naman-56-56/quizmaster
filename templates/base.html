@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Real-time Quiz Platform{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .correct-answer {
+            background: linear-gradient(135deg, #10b981, #059669);
+            animation: correctPulse 0.6s ease-out;
+        }
+        
+        .incorrect-answer {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: incorrectShake 0.6s ease-out;
+        }
+        
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .leaderboard-item {
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .rank-change-up {
+            color: #10b981;
+            animation: rankUp 0.5s ease-out;
+        }
+        
+        .rank-change-down {
+            color: #ef4444;
+            animation: rankDown 0.5s ease-out;
+        }
+        
+        @keyframes rankUp {
+            0% { transform: translateY(10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes rankDown {
+            0% { transform: translateY(-10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .connection-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .connected {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        
+        .disconnected {
+            background-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        
+        .connecting {
+            background-color: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">
+                        QuizMaster
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'create_quiz' %}" class="text-gray-600 hover:text-indigo-600 transition-colors">
+                        Create Quiz
+                    </a>
+                    <a href="{% url 'home' %}" class="text-gray-600 hover:text-indigo-600 transition-colors">
+                        Join Quiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-gray-500">
+                <p>&copy; 2024 QuizMaster. Real-time multiplayer quiz platform.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Global JavaScript -->
+    <script>
+        // Global utilities
+        window.QuizUtils = {
+            // Format time in MM:SS format
+            formatTime: function(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            },
+            
+            // Show notification
+            showNotification: function(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 slide-in ${
+                    type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                    type === 'warning' ? 'bg-yellow-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            },
+            
+            // Play sound effect
+            playSound: function(type) {
+                // Create audio context for sound effects
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (type === 'correct') {
+                    // Play success sound
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } else if (type === 'incorrect') {
+                    // Play error sound
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                }
+            }
+        };
+        
+        // CSRF token for AJAX requests
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        window.csrfToken = getCookie('csrftoken');
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

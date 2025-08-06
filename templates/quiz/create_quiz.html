@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Quiz - QuizMaster{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Create Your Quiz</h1>
+            <p class="text-lg text-gray-600">Design an engaging multiplayer quiz experience</p>
+        </div>
+
+        <!-- Error Display -->
+        {% if error %}
+        <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex">
+                <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                </svg>
+                <p class="text-red-700">{{ error }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quiz Creation Form -->
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Basic Information</h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Quiz Title *</label>
+                        <input type="text" 
+                               id="title" 
+                               name="title" 
+                               required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                               placeholder="Enter quiz title">
+                    </div>
+                    
+                    <div>
+                        <label for="time_per_question" class="block text-sm font-medium text-gray-700 mb-2">Time per Question (seconds)</label>
+                        <input type="number" 
+                               id="time_per_question" 
+                               name="time_per_question" 
+                               value="30" 
+                               min="10" 
+                               max="300"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea id="description" 
+                              name="description" 
+                              rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                              placeholder="Brief description of your quiz"></textarea>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <label for="max_players" class="block text-sm font-medium text-gray-700 mb-2">Max Players</label>
+                        <input type="number" 
+                               id="max_players" 
+                               name="max_players" 
+                               value="200" 
+                               min="2" 
+                               max="500"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label for="points_per_question" class="block text-sm font-medium text-gray-700 mb-2">Base Points per Question</label>
+                        <input type="number" 
+                               id="points_per_question" 
+                               name="points_per_question" 
+                               value="1000" 
+                               min="100" 
+                               max="10000" 
+                               step="100"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold text-gray-900">Questions</h2>
+                    <button type="button" 
+                            id="addQuestion" 
+                            class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Add Question
+                    </button>
+                </div>
+                
+                <div id="questionsContainer" class="space-y-6">
+                    <!-- Questions will be added here dynamically -->
+                </div>
+                
+                <!-- Hidden textarea for JSON data -->
+                <textarea id="questions_data" name="questions_data" class="hidden"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" 
+                        class="bg-indigo-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Create Quiz
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Question Template -->
+<template id="questionTemplate">
+    <div class="question-item border border-gray-200 rounded-lg p-6 bg-gray-50">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Question <span class="question-number">1</span></h3>
+            <button type="button" class="remove-question text-red-600 hover:text-red-800">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Question Text *</label>
+                <textarea class="question-text w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                          rows="2" 
+                          placeholder="Enter your question"></textarea>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Option A *</label>
+                    <input type="text" 
+                           class="option-a w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           placeholder="Option A">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Option B *</label>
+                    <input type="text" 
+                           class="option-b w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           placeholder="Option B">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Option C *</label>
+                    <input type="text" 
+                           class="option-c w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           placeholder="Option C">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Option D *</label>
+                    <input type="text" 
+                           class="option-d w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           placeholder="Option D">
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Correct Answer *</label>
+                    <select class="correct-answer w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Select correct answer</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Points (optional)</label>
+                    <input type="number" 
+                           class="question-points w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                           placeholder="Leave empty for default"
+                           min="100" 
+                           max="10000" 
+                           step="100">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Explanation (optional)</label>
+                <textarea class="question-explanation w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" 
+                          rows="2" 
+                          placeholder="Explain the correct answer"></textarea>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class QuizBuilder {
+    constructor() {
+        this.questionCount = 0;
+        this.init();
+    }
+    
+    init() {
+        document.getElementById('addQuestion').addEventListener('click', () => this.addQuestion());
+        document.querySelector('form').addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // Add first question by default
+        this.addQuestion();
+    }
+    
+    addQuestion() {
+        const template = document.getElementById('questionTemplate');
+        const clone = template.content.cloneNode(true);
+        
+        this.questionCount++;
+        
+        // Update question number
+        clone.querySelector('.question-number').textContent = this.questionCount;
+        
+        // Add remove event listener
+        clone.querySelector('.remove-question').addEventListener('click', (e) => {
+            if (this.questionCount > 1) {
+                e.target.closest('.question-item').remove();
+                this.updateQuestionNumbers();
+            } else {
+                QuizUtils.showNotification('At least one question is required', 'warning');
+            }
+        });
+        
+        document.getElementById('questionsContainer').appendChild(clone);
+        this.updateQuestionNumbers();
+    }
+    
+    updateQuestionNumbers() {
+        const questions = document.querySelectorAll('.question-item');
+        this.questionCount = questions.length;
+        
+        questions.forEach((question, index) => {
+            question.querySelector('.question-number').textContent = index + 1;
+        });
+    }
+    
+    validateQuestions() {
+        const questions = document.querySelectorAll('.question-item');
+        const errors = [];
+        
+        questions.forEach((question, index) => {
+            const questionText = question.querySelector('.question-text').value.trim();
+            const optionA = question.querySelector('.option-a').value.trim();
+            const optionB = question.querySelector('.option-b').value.trim();
+            const optionC = question.querySelector('.option-c').value.trim();
+            const optionD = question.querySelector('.option-d').value.trim();
+            const correctAnswer = question.querySelector('.correct-answer').value;
+            
+            if (!questionText) {
+                errors.push(`Question ${index + 1}: Question text is required`);
+            }
+            
+            if (!optionA || !optionB || !optionC || !optionD) {
+                errors.push(`Question ${index + 1}: All options are required`);
+            }
+            
+            if (!correctAnswer) {
+                errors.push(`Question ${index + 1}: Correct answer must be selected`);
+            }
+        });
+        
+        return errors;
+    }
+    
+    buildQuestionsData() {
+        const questions = document.querySelectorAll('.question-item');
+        const questionsData = [];
+        
+        questions.forEach((question) => {
+            const questionData = {
+                question: question.querySelector('.question-text').value.trim(),
+                options: {
+                    A: question.querySelector('.option-a').value.trim(),
+                    B: question.querySelector('.option-b').value.trim(),
+                    C: question.querySelector('.option-c').value.trim(),
+                    D: question.querySelector('.option-d').value.trim()
+                },
+                correct_answer: question.querySelector('.correct-answer').value,
+                explanation: question.querySelector('.question-explanation').value.trim() || null,
+                points: parseInt(question.querySelector('.question-points').value) || null
+            };
+            
+            questionsData.push(questionData);
+        });
+        
+        return {
+            questions: questionsData
+        };
+    }
+    
+    handleSubmit(e) {
+        const errors = this.validateQuestions();
+        
+        if (errors.length > 0) {
+            e.preventDefault();
+            QuizUtils.showNotification(errors[0], 'error');
+            return;
+        }
+        
+        const questionsData = this.buildQuestionsData();
+        document.getElementById('questions_data').value = JSON.stringify(questionsData);
+        
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating Quiz...';
+    }
+}
+
+// Initialize quiz builder when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new QuizBuilder();
+});
+</script>
+{% endblock %}
