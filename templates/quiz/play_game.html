@@ -52,7 +52,7 @@
         <h3 class="text-2xl font-bold mb-4">Game Finished!</h3>
         <div class="text-4xl font-bold mb-2" id="finalScore">{{ player.score }}</div>
         <div class="text-lg opacity-80 mb-6">Final Score</div>
-        <div id="finalRank" class="text-lg font-semibold"></div>
+        <!-- Final rank removed -->
     </div>
 </div>
 
@@ -77,7 +77,7 @@ socket.onmessage = function(e) {
             handleNewQuestion(data.question);
             break;
         case 'game_ended':
-            handleGameEnded(data.leaderboard);
+            handleGameEnded();
             break;
     }
 };
@@ -92,20 +92,13 @@ function handleNewQuestion(questionData) {
     displayQuestion(questionData);
 }
 
-function handleGameEnded(leaderboard) {
+function handleGameEnded() {
     document.getElementById('questionPanel').classList.add('hidden');
     document.getElementById('finalResults').classList.remove('hidden');
-    
     if (currentTimer) {
         clearInterval(currentTimer);
     }
-    
-    // Find player's rank
-    const playerRank = leaderboard.find(p => p.nickname === '{{ player.nickname }}');
-    if (playerRank) {
-        document.getElementById('finalRank').textContent = `Rank: #${playerRank.rank} of ${leaderboard.length}`;
-        document.getElementById('finalScore').textContent = playerRank.score;
-    }
+    // leaderboard display removed
 }
 
 function displayQuestion(questionData) {

@@ -55,37 +55,16 @@
         </div>
     </div>
     
-    <!-- Players and Leaderboard -->
-    <div class="grid md:grid-cols-2 gap-6">
-        <!-- Players -->
-        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
-            <h2 class="text-xl font-bold mb-4">Players (<span id="playerCount">{{ players.count }}</span>)</h2>
-            <div id="playersList" class="space-y-2 max-h-64 overflow-y-auto">
-                {% for player in players %}
-                <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
-                    <span>{{ player.nickname }}</span>
-                    <span class="text-sm opacity-80">{{ player.joined_at|date:"H:i" }}</span>
-                </div>
-                {% endfor %}
+    <!-- Players -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
+        <h2 class="text-xl font-bold mb-4">Players (<span id="playerCount">{{ players.count }}</span>)</h2>
+        <div id="playersList" class="space-y-2 max-h-64 overflow-y-auto">
+            {% for player in players %}
+            <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
+                <span>{{ player.nickname }}</span>
+                <span class="text-sm opacity-80">{{ player.joined_at|date:"H:i" }}</span>
             </div>
-        </div>
-        
-        <!-- Leaderboard -->
-        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white">
-            <h2 class="text-xl font-bold mb-4">Live Leaderboard</h2>
-            <div id="leaderboard" class="space-y-2">
-                {% for player in players %}
-                <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
-                    <div class="flex items-center">
-                        <span class="w-8 h-8 bg-yellow-500 text-black rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                            {{ forloop.counter }}
-                        </span>
-                        <span>{{ player.nickname }}</span>
-                    </div>
-                    <span class="font-bold text-lg">{{ player.score }}</span>
-                </div>
-                {% endfor %}
-            </div>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -98,7 +77,6 @@ let currentTimer = null;
 
 socket.onmessage = function(e) {
     const data = JSON.parse(e.data);
-    
     switch(data.type) {
         case 'game_started':
             handleGameStarted(data.question);
@@ -107,14 +85,12 @@ socket.onmessage = function(e) {
             handleNewQuestion(data.question);
             break;
         case 'game_ended':
-            handleGameEnded(data.leaderboard);
+            handleGameEnded();
             break;
         case 'player_update':
-            updatePlayerCount();
+            updatePlayerListAndCount();
             break;
-        case 'leaderboard_update':
-            updateLeaderboard(data.leaderboard);
-            break;
+        // leaderboard_update removed
     }
 };
 
@@ -154,17 +130,14 @@ function handleNewQuestion(questionData) {
     startTimer(questionData.time_limit);
 }
 
-function handleGameEnded(leaderboard) {
+function handleGameEnded() {
     document.getElementById('currentQuestion').classList.add('hidden');
     document.getElementById('nextQuestion').disabled = true;
     document.getElementById('endGame').disabled = true;
     document.getElementById('gameStatus').textContent = 'Finished';
-    
     if (currentTimer) {
         clearInterval(currentTimer);
     }
-    
-    updateLeaderboard(leaderboard);
     showNotification('Game has ended!', 'success');
 }
 
@@ -219,39 +192,12 @@ function startTimer(duration) {
     }, 1000);
 }
 
-function updatePlayerCount() {
-    fetch(`/api/leaderboard/${gameCode}/`)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('playerCount').textContent = data.leaderboard.length;
-        });
+
+function updatePlayerListAndCount() {
+    // leaderboard fetch removed
 }
 
-function updateLeaderboard(leaderboardData) {
-    const leaderboard = document.getElementById('leaderboard');
-    
-    leaderboard.innerHTML = leaderboardData.map((player, index) => `
-        <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
-            <div class="flex items-center">
-                <span class="w-8 h-8 ${
-                    index === 0 ? 'bg-yellow-500' : 
-                    index === 1 ? 'bg-gray-400' : 
-                    index === 2 ? 'bg-orange-500' : 'bg-blue-500'
-                } text-black rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                    ${player.rank}
-                </span>
-                <span>${player.nickname}</span>
-            </div>
-            <span class="font-bold text-lg">${player.score}</span>
-        </div>
-    `).join('');
-}
 
-// Update leaderboard every 3 seconds
-setInterval(() => {
-    fetch(`/api/leaderboard/${gameCode}/`)
-        .then(response => response.json())
-        .then(data => updateLeaderboard(data.leaderboard));
-}, 3000);
+// leaderboard update interval removed
 </script>
 {% endblock %}

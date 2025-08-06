@@ -13,6 +13,8 @@ def api_quizzes(request):
 def choose_quiz(request):
     return render(request, 'quiz/choose_quiz.html')
 from django.views.decorators.csrf import csrf_exempt
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 @csrf_exempt
 def join_quiz(request):
     if request.method == 'POST':
@@ -27,6 +29,7 @@ def join_quiz(request):
             status='WAITING'
         )
         player = Player.objects.create(session=session, name=name)
+        # Notify host via WebSocket
         return JsonResponse({'success': True, 'player_id': player.id, 'session_id': session.id})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 from django.shortcuts import render, get_object_or_404, redirect
@@ -153,22 +156,4 @@ def submit_answer(request):
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
-def leaderboard(request, game_code):
-    quiz = get_object_or_404(Quiz, game_code=game_code)
-    
-    try:
-        session = GameSession.objects.get(quiz=quiz)
-        players = session.players.all().order_by('-score')
-        
-        leaderboard_data = [
-            {
-                'rank': i + 1,
-                'nickname': player.nickname,
-                'score': player.score
-            }
-            for i, player in enumerate(players)
-        ]
-        
-        return JsonResponse({'leaderboard': leaderboard_data})
-    except GameSession.DoesNotExist:
-        return JsonResponse({'leaderboard': []})
+    # leaderboard view removed

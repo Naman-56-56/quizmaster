@@ -5,21 +5,10 @@ from .models import Quiz, GameSession, Player
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.game_code = self.scope['url_route']['kwargs']['game_code']
-        self.room_group_name = f'game_{self.game_code}'
-        
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        
         await self.accept()
     
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        pass
     
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -36,50 +25,20 @@ class GameConsumer(AsyncWebsocketConsumer):
     
     async def start_game(self):
         await self.update_game_status('ACTIVE')
-        question_data = await self.get_current_question()
-        
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'game_started',
-                'question': question_data
-            }
-        )
+        # Channels group_send removed
     
     async def next_question(self):
         question_data = await self.advance_question()
-        
-        if question_data:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    'type': 'new_question',
-                    'question': question_data
-                }
-            )
-        else:
+        # Channels group_send removed
+        if not question_data:
             await self.end_game()
     
     async def end_game(self):
         await self.update_game_status('FINISHED')
-        leaderboard = await self.get_final_leaderboard()
-        
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'game_ended',
-                'leaderboard': leaderboard
-            }
-        )
+        # Channels group_send removed
     
     async def player_joined(self, data):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'player_update',
-                'player': data['player']
-            }
-        )
+        pass
     
     # WebSocket message handlers
     async def game_started(self, event):
@@ -96,8 +55,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     
     async def game_ended(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'game_ended',
-            'leaderboard': event['leaderboard']
+            'type': 'game_ended'
         }))
     
     async def player_update(self, event):
@@ -106,13 +64,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             'player': event['player']
         }))
     
-    async def leaderboard_update(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'leaderboard_update',
-            'leaderboard': event['leaderboard']
-        }))
     
-    @database_sync_to_async
+    # removed stray decorator
     def update_game_status(self, status):
         try:
             session = GameSession.objects.get(quiz__game_code=self.game_code)
@@ -121,7 +74,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except GameSession.DoesNotExist:
             pass
     
-    @database_sync_to_async
+    # removed stray decorator
     def get_current_question(self):
         try:
             session = GameSession.objects.get(quiz__game_code=self.game_code)
@@ -142,7 +95,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except GameSession.DoesNotExist:
             return None
     
-    @database_sync_to_async
+    # removed stray decorator
     def advance_question(self):
         try:
             session = GameSession.objects.get(quiz__game_code=self.game_code)
@@ -166,19 +119,4 @@ class GameConsumer(AsyncWebsocketConsumer):
         except GameSession.DoesNotExist:
             return None
     
-    @database_sync_to_async
-    def get_final_leaderboard(self):
-        try:
-            session = GameSession.objects.get(quiz__game_code=self.game_code)
-            players = session.players.all().order_by('-score')
-            
-            return [
-                {
-                    'rank': i + 1,
-                    'nickname': player.nickname,
-                    'score': player.score
-                }
-                for i, player in enumerate(players)
-            ]
-        except GameSession.DoesNotExist:
-            return []
+    # removed stray decorator
