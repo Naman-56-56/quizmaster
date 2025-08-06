@@ -59,44 +59,7 @@ def host_game(request, game_code):
         'players': players
     })
 
-def join_game(request, game_code):
-    quiz = get_object_or_404(Quiz, game_code=game_code)
-    
-    if request.method == 'POST':
-        nickname = request.POST.get('nickname', '').strip()
-        
-        if not nickname:
-            return render(request, 'quiz/join_game.html', {
-                'quiz': quiz,
-                'error': 'Please enter a nickname'
-            })
-        
-        # Get or create session
-        session, created = GameSession.objects.get_or_create(
-            quiz=quiz,
-            defaults={'status': 'WAITING'}
-        )
-        
-        # Check if nickname is taken
-        if session.players.filter(nickname=nickname).exists():
-            return render(request, 'quiz/join_game.html', {
-                'quiz': quiz,
-                'error': 'Nickname already taken'
-            })
-        
-        # Create player
-        player = Player.objects.create(
-            session=session,
-            nickname=nickname
-        )
-        
-        # Store player info in session
-        request.session['player_id'] = player.id
-        request.session['game_code'] = game_code
-        
-        return redirect('play_game', game_code=game_code)
-    
-    return render(request, 'quiz/join_game.html', {'quiz': quiz})
+
 
 def play_game(request, game_code):
     quiz = get_object_or_404(Quiz, game_code=game_code)

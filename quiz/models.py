@@ -71,12 +71,12 @@ class GameSession(models.Model):
 
 class Player(models.Model):
     session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='players')
-    nickname = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
     score = models.IntegerField(default=0)
     joined_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
-        unique_together = ['session', 'nickname']
-    
+        unique_together = ['session', 'name']
+
     def __str__(self):
-        return f"{self.nickname} - {self.score}"
+        return f"{self.name} - {self.score}"

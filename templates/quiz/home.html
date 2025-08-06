@@ -16,27 +16,19 @@
                 Create New Quiz
             </a>
         </div>
-        
+
         <!-- Join Quiz -->
-        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white">
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white flex flex-col items-center justify-center">
             <div class="text-6xl mb-4">📱</div>
             <h2 class="text-2xl font-bold mb-4">Join Quiz</h2>
-            <p class="mb-6">Scan QR code or enter game code to join a live quiz</p>
-            
-            <form id="joinForm" class="space-y-4">
-                <input type="text" 
-                       id="gameCode" 
-                       placeholder="Enter 6-digit game code" 
-                       class="w-full px-4 py-3 rounded-lg text-gray-800 text-center font-mono text-lg"
-                       maxlength="6">
-                <button type="submit" 
-                        class="w-full bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-                    Join Game
-                </button>
+            <p class="mb-6">Enter your name to join a quiz session</p>
+            <button id="showJoinFormBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors mb-2">Join Quiz</button>
+            <form id="joinNameForm" class="space-y-4 w-full max-w-xs hidden">
+                <input type="text" id="userName" name="userName" placeholder="Enter your name" class="w-full px-4 py-3 rounded-lg text-gray-800 text-center font-mono text-lg" required>
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors">Continue</button>
             </form>
         </div>
     </div>
-    
     <!-- Features -->
     <div class="mt-16 grid md:grid-cols-3 gap-6">
         <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-white">
@@ -55,18 +47,23 @@
             <p class="text-sm opacity-80">Easy quiz creation with JSON format</p>
         </div>
     </div>
-</div>
-
 <script>
-document.getElementById('joinForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const gameCode = document.getElementById('gameCode').value.trim().toUpperCase();
-    
-    if (gameCode.length === 6) {
-        window.location.href = `/join/${gameCode}/`;
-    } else {
-        showNotification('Please enter a valid 6-character game code', 'error');
-    }
-});
+const showJoinFormBtn = document.getElementById('showJoinFormBtn');
+const joinNameForm = document.getElementById('joinNameForm');
+if (showJoinFormBtn && joinNameForm) {
+    showJoinFormBtn.addEventListener('click', function() {
+        showJoinFormBtn.style.display = 'none';
+        joinNameForm.classList.remove('hidden');
+    });
+    joinNameForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const userName = document.getElementById('userName').value.trim();
+        if (userName.length > 0) {
+            // You can handle the next step here, e.g., redirect or show a message
+            alert('Welcome, ' + userName + '!');
+        }
+    });
+}
 </script>
+ </div>
 {% endblock %}
