@@ -19,6 +19,7 @@
         </div>
     </div>
     
+    {% if is_host %}
     <!-- Controls -->
     <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-white">
         <h2 class="text-xl font-bold mb-4">Game Controls</h2>
@@ -37,6 +38,7 @@
             </button>
         </div>
     </div>
+    {% endif %}
     
     <!-- Current Question -->
     <div id="currentQuestion" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-white hidden">
@@ -194,8 +196,24 @@ function startTimer(duration) {
 
 
 function updatePlayerListAndCount() {
-    // leaderboard fetch removed
+    fetch(`/api/players/${gameCode}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('playerCount').textContent = data.count;
+            const playersList = document.getElementById('playersList');
+            if (playersList) {
+                playersList.innerHTML = data.players.map(player => `
+                    <div class="bg-white/10 rounded-lg p-3 flex justify-between items-center">
+                        <span>${player.name}</span>
+                        <span class="text-sm opacity-80">${player.joined_at}</span>
+                    </div>
+                `).join('');
+            }
+        });
 }
+
+// Poll every 2 seconds for live player updates
+setInterval(updatePlayerListAndCount, 2000);
 
 
 // leaderboard update interval removed

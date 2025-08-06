@@ -1,4 +1,5 @@
 from django.urls import path
+from django.urls import path
 
 
 from . import views
@@ -14,4 +15,8 @@ urlpatterns = [
     path('api/join-quiz/', views.join_quiz, name='join_quiz'),
     path('choose-quiz/', views.choose_quiz, name='choose_quiz'),
     path('api/quizzes/', views.api_quizzes, name='api_quizzes'),
+    path('api/players/<str:game_code>/', views.api_players, name='api_players'),
+    path('api/start-game/<str:game_code>/', views.api_start_game, name='api_start_game'),
+    path('api/next-question/<str:game_code>/', views.api_next_question, name='api_next_question'),
+    path('api/end-game/<str:game_code>/', views.api_end_game, name='api_end_game'),
 ]

@@ -1,4 +1,66 @@
-from django.core.serializers import serialize
+# --- Imports ---
+from django.views.decorators.http import require_GET
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from .models import Quiz, GameSession, Player
+import json
+
+# --- API Endpoints for Host Controls ---
+@csrf_exempt
+def api_start_game(request, game_code):
+    if request.method == 'POST':
+        session = GameSession.objects.filter(quiz__game_code=game_code).first()
+        if not session:
+            return JsonResponse({'error': 'Session not found'}, status=404)
+        session.status = 'ACTIVE'
+        session.current_question_index = 0
+        session.save()
+        return JsonResponse({'success': True})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def api_next_question(request, game_code):
+    if request.method == 'POST':
+        session = GameSession.objects.filter(quiz__game_code=game_code).first()
+        if not session:
+            return JsonResponse({'error': 'Session not found'}, status=404)
+        session.current_question_index += 1
+        session.save()
+        return JsonResponse({'success': True})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def api_end_game(request, game_code):
+    if request.method == 'POST':
+        session = GameSession.objects.filter(quiz__game_code=game_code).first()
+        if not session:
+            return JsonResponse({'error': 'Session not found'}, status=404)
+        session.status = 'FINISHED'
+        session.save()
+        return JsonResponse({'success': True})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+# AJAX endpoint for live player count and list
+@require_GET
+def api_players(request, game_code):
+    try:
+        session = GameSession.objects.get(quiz__game_code=game_code)
+        players = session.players.all().order_by('joined_at')
+        data = {
+            'count': players.count(),
+            'players': [
+                {
+                    'id': p.id,
+                    'name': getattr(p, 'name', getattr(p, 'nickname', '')),
+                    'joined_at': p.joined_at.strftime('%H:%M') if hasattr(p, 'joined_at') else ''
+                }
+                for p in players
+            ]
+        }
+        return JsonResponse(data)
+    except GameSession.DoesNotExist:
+        return JsonResponse({'count': 0, 'players': []})
 def api_quizzes(request):
     quizzes = Quiz.objects.all().order_by('-created_at')
     quiz_list = [
@@ -12,9 +74,7 @@ def api_quizzes(request):
     return JsonResponse({'quizzes': quiz_list})
 def choose_quiz(request):
     return render(request, 'quiz/choose_quiz.html')
-from django.views.decorators.csrf import csrf_exempt
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+ 
 @csrf_exempt
 def join_quiz(request):
     if request.method == 'POST':
@@ -29,15 +89,12 @@ def join_quiz(request):
             status='WAITING'
         )
         player = Player.objects.create(session=session, name=name)
-        # Notify host via WebSocket
+        # Remove host flag if present (joining as participant)
+        if 'is_quiz_host' in request.session:
+            del request.session['is_quiz_host']
         return JsonResponse({'success': True, 'player_id': player.id, 'session_id': session.id})
     return JsonResponse({'error': 'Invalid request'}, status=400)
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
-from .models import Quiz, GameSession, Player
-import json
+
 
 def home(request):
     return render(request, 'quiz/home.html')
@@ -62,7 +119,8 @@ def create_quiz(request):
                 quiz_data=quiz_data,
                 time_per_question=time_per_question
             )
-            
+            # Mark this user/session as the host for this quiz
+            request.session['is_quiz_host'] = str(quiz.game_code)
             return redirect('quiz_created', game_code=quiz.game_code)
             
         except json.JSONDecodeError:
@@ -87,10 +145,18 @@ def host_game(request, game_code):
     
     players = session.players.all().order_by('-score')
     
+    # Only show controls if user is the creator (host)
+    is_host = False
+    if hasattr(quiz, 'created_by') and request.user.is_authenticated:
+        is_host = (quiz.created_by == request.user)
+    # Optionally, you can set is_host=True for the user who just created the quiz (session variable)
+    if request.session.get('is_quiz_host') == str(quiz.game_code):
+        is_host = True
     return render(request, 'quiz/host_game.html', {
         'quiz': quiz,
         'session': session,
-        'players': players
+        'players': players,
+        'is_host': is_host
     })
 
 
