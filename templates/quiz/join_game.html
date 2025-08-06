@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white text-center">
+        <div class="text-6xl mb-6">🎮</div>
+        <h1 class="text-2xl font-bold mb-2">Join Quiz</h1>
+        <h2 class="text-xl mb-6">{{ quiz.title }}</h2>
+        
+        <div class="bg-white/20 rounded-xl p-4 mb-6">
+            <p class="text-sm opacity-80">Game Code</p>
+            <p class="text-2xl font-mono font-bold">{{ quiz.game_code }}</p>
+        </div>
+        
+        {% if error %}
+        <div class="bg-red-500 text-white p-4 rounded-lg mb-6">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium mb-2">Choose your nickname</label>
+                <input type="text" name="nickname" required maxlength="20"
+                       class="w-full px-4 py-3 rounded-lg text-gray-800 text-center font-semibold"
+                       placeholder="Enter your nickname">
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold text-lg">
+                Join Game
+            </button>
+        </form>
+        
+        <div class="mt-6 text-sm opacity-80">
+            <p>{{ quiz.description }}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus nickname input
+document.querySelector('input[name="nickname"]').focus();
+
+// Generate random nickname suggestion
+const adjectives = ['Quick', 'Smart', 'Fast', 'Cool', 'Super', 'Mega', 'Ultra', 'Pro'];
+const nouns = ['Player', 'Gamer', 'Quiz', 'Master', 'Star', 'Hero', 'Ace', 'Champ'];
+const randomNickname = adjectives[Math.floor(Math.random() * adjectives.length)] + 
+                      nouns[Math.floor(Math.random() * nouns.length)] + 
+                      Math.floor(Math.random() * 100);
+
+document.querySelector('input[name="nickname"]').placeholder = `e.g., ${randomNickname}`;
+</script>
+{% endblock %}

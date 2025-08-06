@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white">
+        <h1 class="text-3xl font-bold mb-8 text-center">Create New Quiz</h1>
+        
+        {% if error %}
+        <div class="bg-red-500 text-white p-4 rounded-lg mb-6">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Quiz Details -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Quiz Title</label>
+                    <input type="text" name="title" required
+                           class="w-full px-4 py-3 rounded-lg text-gray-800"
+                           placeholder="Enter quiz title">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Time per Question (seconds)</label>
+                    <input type="number" name="time_per_question" value="30" min="10" max="120"
+                           class="w-full px-4 py-3 rounded-lg text-gray-800">
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium mb-2">Description (optional)</label>
+                <textarea name="description" rows="2"
+                          class="w-full px-4 py-3 rounded-lg text-gray-800"
+                          placeholder="Brief description of your quiz"></textarea>
+            </div>
+            
+            <!-- Quiz Builder -->
+            <div class="bg-white/10 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4">Quiz Questions</h2>
+                
+                <!-- Question Builder -->
+                <div id="questionBuilder" class="space-y-4">
+                    <div class="bg-white/10 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold">Question 1</h3>
+                            <button type="button" onclick="removeQuestion(this)" 
+                                    class="text-red-400 hover:text-red-300">Remove</button>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <input type="text" placeholder="Enter your question" 
+                                   class="w-full px-3 py-2 rounded text-gray-800 question-text">
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" placeholder="Option A" 
+                                       class="px-3 py-2 rounded text-gray-800 option-input">
+                                <input type="text" placeholder="Option B" 
+                                       class="px-3 py-2 rounded text-gray-800 option-input">
+                                <input type="text" placeholder="Option C" 
+                                       class="px-3 py-2 rounded text-gray-800 option-input">
+                                <input type="text" placeholder="Option D" 
+                                       class="px-3 py-2 rounded text-gray-800 option-input">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm mb-2">Correct Answer:</label>
+                                <select class="px-3 py-2 rounded text-gray-800 correct-answer">
+                                    <option value="0">Option A</option>
+                                    <option value="1">Option B</option>
+                                    <option value="2">Option C</option>
+                                    <option value="3">Option D</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" onclick="addQuestion()" 
+                        class="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">
+                    Add Question
+                </button>
+            </div>
+            
+            <!-- JSON Preview -->
+            <div class="bg-white/10 rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4">JSON Preview</h2>
+                <textarea id="jsonPreview" name="questions_data" rows="10" 
+                          class="w-full px-4 py-3 rounded-lg text-gray-800 font-mono text-sm"
+                          placeholder="Quiz JSON will appear here..."></textarea>
+                <button type="button" onclick="generateJSON()" 
+                        class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Generate JSON
+                </button>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" 
+                        class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold text-lg">
+                    Create Quiz & Generate QR Code
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let questionCount = 1;
+
+function addQuestion() {
+    questionCount++;
+    const questionBuilder = document.getElementById('questionBuilder');
+    
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'bg-white/10 rounded-lg p-4';
+    questionDiv.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold">Question ${questionCount}</h3>
+            <button type="button" onclick="removeQuestion(this)" 
+                    class="text-red-400 hover:text-red-300">Remove</button>
+        </div>
+        
+        <div class="space-y-3">
+            <input type="text" placeholder="Enter your question" 
+                   class="w-full px-3 py-2 rounded text-gray-800 question-text">
+            
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" placeholder="Option A" 
+                       class="px-3 py-2 rounded text-gray-800 option-input">
+                <input type="text" placeholder="Option B" 
+                       class="px-3 py-2 rounded text-gray-800 option-input">
+                <input type="text" placeholder="Option C" 
+                       class="px-3 py-2 rounded text-gray-800 option-input">
+                <input type="text" placeholder="Option D" 
+                       class="px-3 py-2 rounded text-gray-800 option-input">
+            </div>
+            
+            <div>
+                <label class="block text-sm mb-2">Correct Answer:</label>
+                <select class="px-3 py-2 rounded text-gray-800 correct-answer">
+                    <option value="0">Option A</option>
+                    <option value="1">Option B</option>
+                    <option value="2">Option C</option>
+                    <option value="3">Option D</option>
+                </select>
+            </div>
+        </div>
+    `;
+    
+    questionBuilder.appendChild(questionDiv);
+}
+
+function removeQuestion(button) {
+    if (document.querySelectorAll('#questionBuilder > div').length > 1) {
+        button.closest('.bg-white\\/10').remove();
+        updateQuestionNumbers();
+    } else {
+        showNotification('You need at least one question', 'error');
+    }
+}
+
+function updateQuestionNumbers() {
+    const questions = document.querySelectorAll('#questionBuilder > div');
+    questions.forEach((question, index) => {
+        question.querySelector('h3').textContent = `Question ${index + 1}`;
+    });
+    questionCount = questions.length;
+}
+
+function generateJSON() {
+    const questions = [];
+    const questionDivs = document.querySelectorAll('#questionBuilder > div');
+    
+    questionDivs.forEach(questionDiv => {
+        const questionText = questionDiv.querySelector('.question-text').value.trim();
+        const options = Array.from(questionDiv.querySelectorAll('.option-input')).map(input => input.value.trim());
+        const correctAnswer = parseInt(questionDiv.querySelector('.correct-answer').value);
+        
+        if (questionText && options.every(option => option)) {
+            questions.push({
+                question: questionText,
+                options: options,
+                correct_answer: correctAnswer,
+                points: 100
+            });
+        }
+    });
+    
+    const quizData = {
+        questions: questions
+    };
+    
+    document.getElementById('jsonPreview').value = JSON.stringify(quizData, null, 2);
+}
+
+// Auto-generate JSON when form changes
+document.addEventListener('input', function(e) {
+    if (e.target.matches('.question-text, .option-input, .correct-answer')) {
+        setTimeout(generateJSON, 100);
+    }
+});
+
+// Initialize with first question
+generateJSON();
+</script>
+{% endblock %}

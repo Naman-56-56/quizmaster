@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center">
+    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white">
+        <div class="text-6xl mb-6">🎉</div>
+        <h1 class="text-3xl font-bold mb-4">Quiz Created Successfully!</h1>
+        <h2 class="text-xl mb-8">{{ quiz.title }}</h2>
+        
+        <!-- Game Code -->
+        <div class="bg-white/20 rounded-xl p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-2">Game Code</h3>
+            <div class="text-4xl font-mono font-bold mb-4">{{ quiz.game_code }}</div>
+            <button onclick="copyGameCode()" 
+                    class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg">
+                Copy Code
+            </button>
+        </div>
+        
+        <!-- QR Code -->
+        {% if quiz.qr_code %}
+        <div class="bg-white rounded-xl p-6 mb-8 inline-block">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800">QR Code</h3>
+            <img src="{{ quiz.qr_code.url }}" alt="QR Code" class="mx-auto mb-4">
+            <p class="text-sm text-gray-600">Players can scan this to join</p>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="space-y-4">
+            <a href="{% url 'host_game' quiz.game_code %}" 
+               class="block bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold">
+                Host Game Now
+            </a>
+            <a href="{% url 'create_quiz' %}" 
+               class="block bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-lg font-semibold">
+                Create Another Quiz
+            </a>
+            <a href="{% url 'home' %}" 
+               class="block bg-gray-500 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold">
+                Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyGameCode() {
+    const gameCode = '{{ quiz.game_code }}';
+    navigator.clipboard.writeText(gameCode).then(() => {
+        showNotification('Game code copied to clipboard!', 'success');
+    });
+}
+</script>
+{% endblock %}

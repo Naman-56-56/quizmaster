@@ -1,0 +1,59 @@
+{
+  "id": "sample_quiz_001",
+  "title": "General Knowledge Quiz",
+  "description": "Test your knowledge with this fun general knowledge quiz covering various topics including science, history, and geography.",
+  "questions": [
+    {
+      "id": "q1",
+      "text": "What is the capital city of Australia?",
+      "type": "multiple_choice",
+      "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+      "correct_answer": 2,
+      "time_limit": 30,
+      "points": 100
+    },
+    {
+      "id": "q2", 
+      "text": "The Great Wall of China is visible from space with the naked eye.",
+      "type": "true_false",
+      "options": ["True", "False"],
+      "correct_answer": 1,
+      "time_limit": 20,
+      "points": 100
+    },
+    {
+      "id": "q3",
+      "text": "Which planet is known as the 'Red Planet'?",
+      "type": "multiple_choice", 
+      "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+      "correct_answer": 1,
+      "time_limit": 25,
+      "points": 100
+    },
+    {
+      "id": "q4",
+      "text": "What is the largest ocean on Earth?",
+      "type": "multiple_choice",
+      "options": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+      "correct_answer": 3,
+      "time_limit": 30,
+      "points": 100
+    },
+    {
+      "id": "q5",
+      "text": "The human brain uses approximately 20% of the body's total energy.",
+      "type": "true_false",
+      "options": ["True", "False"],
+      "correct_answer": 0,
+      "time_limit": 25,
+      "points": 100
+    }
+  ],
+  "created_at": "2024-01-15T10:30:00.000Z",
+  "settings": {
+    "time_per_question": 30,
+    "randomize_questions": false,
+    "show_correct_answer": true,
+    "allow_review": false
+  }
+}
