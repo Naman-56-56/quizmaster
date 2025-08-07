@@ -1,64 +1,147 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <!-- Player Info -->
-    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-4 mb-4 text-white">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="font-bold text-lg">{{ player.nickname }}</h2>
-                <p class="text-sm opacity-80">{{ quiz.title }}</p>
-            </div>
-            <div class="text-right">
-                <div class="text-3xl font-bold" id="playerScore">{{ player.score }}</div>
-                <div class="text-xs opacity-80">Score</div>
+<div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-gray-900 p-4 md:p-8">
+    <div class="fixed inset-0 overflow-hidden -z-10">
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-gray-900"></div>
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiIGZpbGwtcnVsZT0ibm9uemVybyI+PHBhdGggZD0iTTM2IDM0YzAtMS4xLjktMiAyLTJoMTBjMS4xIDAgMiAuOSAyIDIgMCA1LjUtNC41IDEwLTEwIDEwLTIuOCAwLTUuMy0xLjEtNy4xLTIuOS0xLjggMS44LTQuMyAyLjktNy4xIDIuOS01LjUgMC0xMC00LjUtMTAtMTAgMC0yLjggMS4xLTUuMyAyLjktNy4xLTEuOC0xLjgtMi45LTQuMy0yLjktNy4xIDAtNS41IDQuNS0xMCAxMC0xMCAyLjggMCA1LjMgMS4xIDcuMSAyLjkgMS44LTEuOCA0LjMtMi45IDcuMS0yLjkgNS41IDAgMTAgNC41IDEwIDEwIDAgMi44LTEuMSA1LjMtMi45IDcuMSAxLjggMS44IDIuOSA0LjMgMi45IDcuMSAwIDUuNS00LjUgMTAtMTAgMTAtMi44IDAtNS4zLTEuMS03LjEtMi45LTEuOCAxLjgtNC4zIDIuOS03LjEgMi45LTUuNSAwLTEwLTQuNS0xMC0xMGMwLTIuOCAxLjEtNS4zIDIuOS03LjEgMS44IDEuOCA0LjMgMi45IDcuMSAyLjl6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-20"></div>
+    </div>
+
+    <div class="max-w-4xl mx-auto relative z-10">
+        <!-- Player Info -->
+        <div class="bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/10 shadow-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0 text-center md:text-left">
+                    <h2 class="font-bold text-2xl text-white">{{ player.nickname }}</h2>
+                    <p class="text-sm text-white/70 mt-1">{{ quiz.title }}</p>
+                </div>
+                <div class="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl shadow-lg transform transition-all hover:scale-105">
+                    <div class="text-4xl font-bold text-white text-center" id="playerScore">{{ player.score }}</div>
+                    <div class="text-xs text-white/80 text-center uppercase tracking-wider mt-1">Score</div>
+                </div>
             </div>
         </div>
-    </div>
     
-    <!-- Game Status -->
-    <div id="gameStatus" class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white text-center">
-        <div class="text-6xl mb-4 pulse">⏳</div>
-        <h3 class="text-xl font-bold mb-2">Waiting for game to start...</h3>
-        <p class="opacity-80">The host will start the quiz shortly</p>
-    </div>
-    
-    <!-- Question Panel -->
-    <div id="questionPanel" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-white hidden">
-        <div class="mb-6">
-            <div class="flex justify-between items-center mb-2">
-                <span id="questionNumber" class="text-sm opacity-80">Question 1 of 10</span>
-                <span id="timeRemaining" class="font-bold text-2xl text-yellow-400">30s</span>
+        <!-- Game Status -->
+        <div id="gameStatus" class="bg-white/5 backdrop-blur-lg rounded-2xl p-8 text-center border border-white/10 shadow-2xl transform transition-all duration-500 animate-fade-in bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
+            <div class="inline-block p-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full shadow-lg mb-6 transform transition-all hover:scale-110">
+                <div class="text-6xl">⏳</div>
             </div>
-            <div class="w-full bg-white/20 rounded-full h-3 mb-4">
-                <div id="timeProgress" class="bg-yellow-400 h-3 rounded-full transition-all duration-1000" style="width: 100%"></div>
+            <h3 class="text-2xl font-bold text-white mb-3">Waiting for game to start...</h3>
+            <p class="text-white/80 max-w-md mx-auto">The host will start the quiz shortly. Get ready to test your knowledge!</p>
+            <div class="mt-6">
+                <div class="inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse"></div>
+                <div class="inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse mx-1"></div>
+                <div class="inline-block h-2 w-2 rounded-full bg-yellow-400 animate-pulse"></div>
             </div>
         </div>
-        
-        <h3 id="questionText" class="text-xl font-bold mb-6"></h3>
-        
-        <div id="choicesContainer" class="space-y-3">
-            <!-- Choices will be loaded here -->
-        </div>
-        
-        <div id="answerFeedback" class="mt-6 p-4 rounded-lg hidden">
-            <!-- Answer feedback will be shown here -->
-        </div>
-    </div>
     
-    <!-- Final Results -->
-    <div id="finalResults" class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 text-white text-center hidden">
-        <div class="text-6xl mb-4">🎉</div>
-        <h3 class="text-2xl font-bold mb-4">Game Finished!</h3>
-        <div class="text-4xl font-bold mb-2" id="finalScore">{{ player.score }}</div>
-        <div class="text-lg opacity-80 mb-6">Final Score</div>
-        <!-- Final rank removed -->
-    </div>
+        <!-- Question Panel -->
+        <div id="questionPanel" class="bg-white/5 backdrop-blur-lg rounded-2xl p-6 md:p-8 text-white border border-white/10 shadow-2xl transform transition-all duration-500 hidden">
+            <div class="mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                    <span id="questionNumber" class="text-sm font-medium text-white/70 bg-white/10 px-3 py-1 rounded-full mb-2 md:mb-0">Question <span class="font-bold">1</span> of <span class="font-bold">10</span></span>
+                    <div class="flex items-center bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-4 py-2 rounded-full border border-amber-400/30">
+                        <span class="text-yellow-400 text-sm font-medium mr-2">Time Left</span>
+                        <span id="timeRemaining" class="text-2xl font-bold text-yellow-400">30s</span>
+                    </div>
+                </div>
+                <div class="w-full bg-white/10 rounded-full h-2.5 mb-6 overflow-hidden">
+                    <div id="timeProgress" class="bg-gradient-to-r from-amber-400 to-yellow-500 h-full rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <h3 id="questionText" class="text-2xl md:text-3xl font-bold mb-8 leading-tight text-white"></h3>
+            
+            <div id="choicesContainer" class="grid grid-cols-1 gap-3 mb-6">
+                <!-- Choices will be loaded here -->
+            </div>
+            
+            <div id="answerFeedback" class="mt-6 p-5 rounded-xl border-l-4 hidden animate-fade-in">
+                <div class="flex items-start">
+                    <div id="feedbackIcon" class="text-2xl mr-3"></div>
+                    <div>
+                        <h4 id="feedbackTitle" class="font-bold text-lg mb-1"></h4>
+                        <p id="feedbackText" class="text-sm opacity-90"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Final Results -->
+        <div id="finalResults" class="bg-white/5 backdrop-blur-lg rounded-2xl p-8 md:p-12 text-center border border-white/10 shadow-2xl transform transition-all duration-500 animate-fade-in hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10">
+            <div class="inline-block p-6 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full shadow-lg mb-6 transform transition-all hover:scale-110">
+                <div class="text-7xl">🏆</div>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-2">Quiz Completed!</h3>
+            <p class="text-white/80 mb-8">You've finished the quiz with a total score of</p>
+            
+            <div class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-6xl font-bold text-white px-8 py-6 rounded-xl mb-6 shadow-lg transform transition-all hover:scale-105">
+                <span id="finalScore">{{ player.score }}</span>
+                <div class="text-sm font-normal mt-1 opacity-80">POINTS</div>
+            </div>
+            
+            <div class="mt-8">
+                <a href="{% url 'home' %}" class="inline-flex items-center px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Home
+                </a>
+            </div>
+        </div>
 </div>
 
+<style>
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+    .choice-btn {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .choice-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: 0.5s;
+    }
+    .choice-btn:hover::before {
+        left: 100%;
+    }
+    .correct-answer {
+        background: linear-gradient(135deg, #10b981, #059669) !important;
+        border-color: #059669 !important;
+        color: white !important;
+    }
+    .wrong-answer {
+        background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        border-color: #dc2626 !important;
+        color: white !important;
+    }
+    .selected-answer {
+        transform: translateX(8px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+</style>
+
 <script>
+// Game configuration
 const gameCode = '{{ quiz.game_code }}';
-const playerId = {{ player.id }};
+const playerId = '{{ player.id }}';
 const socket = new WebSocket(`ws://${window.location.host}/ws/game/${gameCode}/`);
 
 let currentQuestion = null;
