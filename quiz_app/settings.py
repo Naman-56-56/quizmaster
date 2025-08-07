@@ -65,3 +65,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Add Render domain to trusted CSRF origins
+CSRF_TRUSTED_ORIGINS = [
+    "https://quizmaster-kyxg.onrender.com"
+]
